@@ -31,7 +31,7 @@ export default function Login() {
         const errorData = await res.json();
         alert(errorData.detail || "Invalid email or password");
       }
-    } catch (err) {
+    } catch {
       alert("Error connecting to backend server");
     }
     setLoading(false);
@@ -44,34 +44,34 @@ export default function Login() {
           <h2 className="text-3xl font-bold">Welcome back</h2>
           <p className="text-zinc-400 mt-2">Log in to continue your career journey</p>
         </div>
-        
+
         <div className="space-y-4">
-          <input 
-            type="email" 
-            placeholder="Email address" 
+          <input
+            type="email"
+            placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-zinc-950 border border-zinc-700 focus:border-purple-600 rounded-2xl px-5 py-3.5 outline-none"
           />
-          <input 
-            type="password" 
-            placeholder="Password" 
+          <input
+            type="password"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-zinc-950 border border-zinc-700 focus:border-purple-600 rounded-2xl px-5 py-3.5 outline-none"
           />
         </div>
-        
-        <button 
-          onClick={handleLogin} 
+
+        <button
+          onClick={handleLogin}
           disabled={loading}
           className="w-full mt-6 bg-purple-600 hover:bg-purple-700 disabled:opacity-70 py-4 rounded-2xl font-semibold text-lg transition-all active:scale-[0.985]"
         >
           {loading ? "Logging in..." : "Log In"}
         </button>
-        
+
         <p className="text-center mt-6 text-zinc-400">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/auth/signup" className="text-purple-500 hover:underline font-medium">
             Sign up
           </Link>

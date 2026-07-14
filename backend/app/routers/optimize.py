@@ -1,16 +1,16 @@
-from datetime import datetime
 import logging
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.models import Resume, TailoredResume, User, Application
+from app.models.models import Application, Resume, TailoredResume, User
 from app.schemas.schemas import OptimizeRequest, OptimizeResponse, TailoredSummary
 from app.services.ai_optimizer import optimize_resume
 from app.services.skills import extract_skills
-from app.services.vector_store import query_relevant_chunks_detailed, index_resume
+from app.services.vector_store import index_resume, query_relevant_chunks_detailed
 
 router = APIRouter()
 logger = logging.getLogger("careerforge.optimize")
@@ -111,7 +111,7 @@ def optimize_resume_endpoint(
                 tailored_resume_id=tailored_resume.id,
                 ats_score=result["ats_score"],
                 skills=skills,
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(timezone.utc),
             )
             db.add(app)
             db.commit()
@@ -194,7 +194,7 @@ def delete_optimization(
     )
     if not opt:
         raise HTTPException(status_code=404, detail="Optimization not found")
-    
+
     db.delete(opt)
     db.commit()
     return {"message": "Optimization deleted"}

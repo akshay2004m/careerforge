@@ -1,8 +1,10 @@
-from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
-from app.core.config import settings
 import json
 import re
+
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
+
+from app.core.config import settings
 
 _llm = None
 
@@ -36,13 +38,13 @@ def _extract_json(text: str) -> dict:
             except json.JSONDecodeError:
                 # Try to fix unescaped newlines in strings, a common LLM error
                 # We replace literal newlines with \n, but keep structural newlines if possible?
-                # Actually, json.loads handles single-line JSON perfectly well. 
-                # If we replace ALL \n with \\n, structural \n become escaped \n, which json.loads 
+                # Actually, json.loads handles single-line JSON perfectly well.
+                # If we replace ALL \n with \\n, structural \n become escaped \n, which json.loads
                 # will complain about if they appear outside strings!
                 # Instead, we can use a regex to escape newlines ONLY inside quotes.
                 def replace_newlines(match):
-                    return match.group(0).replace('\n', '\\n')
-                
+                    return match.group(0).replace("\n", "\\n")
+
                 # Matches everything between double quotes, taking escaped quotes into account
                 fixed_str = re.sub(r'"([^"\\]*(\\.[^"\\]*)*)"', replace_newlines, obj_str)
                 try:
@@ -79,9 +81,7 @@ def _parse_optimize_payload(content: str, original_text: str) -> dict:
         "strengths": strengths if isinstance(strengths, list) else [],
         "cover_letter": data.get("cover_letter")
         or "Cover letter generation failed. Please try again.",
-        "llm_suggested_keywords": data.get("target_keywords")
-        or data.get("missing_keywords")
-        or [],
+        "llm_suggested_keywords": data.get("target_keywords") or data.get("missing_keywords") or [],
         "qualitative_fit": data.get("qualitative_fit"),
         "qualitative_summary": data.get("qualitative_summary") or data.get("narrative") or "",
         "improvements": improvements if isinstance(improvements, list) else [],
@@ -222,7 +222,6 @@ def optimize_resume(
     3) Final hybrid score = Rules + Semantic (Chroma) + LLM qualitative (bounded)
     """
     from app.services.ats_analyzer import (
-        analyze_resume,
         layer1_rules,
         score_before_after,
     )

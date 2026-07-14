@@ -12,9 +12,10 @@ Design notes (interview-ready):
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     Column,
@@ -23,10 +24,8 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -46,7 +45,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     headline = Column(String(500), nullable=True)
     location = Column(String(255), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     resumes = relationship(
         "Resume",
@@ -83,7 +82,7 @@ class Resume(Base):
     is_primary = Column(Boolean, nullable=False, default=False)
     # Optional chroma collection document id / namespace key for hybrid search
     vector_namespace = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     user = relationship("User", back_populates="resumes")
     tailored_versions = relationship(
@@ -116,7 +115,7 @@ class TailoredResume(Base):
     job_description = Column(Text, nullable=False)
     tailored_content = Column(JSON, nullable=True)
     ats_score = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     resume = relationship("Resume", back_populates="tailored_versions")
     applications = relationship("Application", back_populates="tailored_resume")
@@ -162,11 +161,11 @@ class Application(Base):
         nullable=True,
     )
     ats_score = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(
         DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
 

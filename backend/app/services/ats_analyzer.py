@@ -20,9 +20,9 @@ from __future__ import annotations
 import logging
 import re
 from collections import Counter
-from typing import Any, Optional
+from typing import Any
 
-from app.services.skills import extract_skills_rules, KNOWN_SKILLS
+from app.services.skills import KNOWN_SKILLS, extract_skills_rules
 
 logger = logging.getLogger("careerforge.ats")
 
@@ -40,11 +40,39 @@ L2_CAP = 25.0
 L3_CAP = 20.0
 
 ACTION_VERBS = {
-    "led", "built", "designed", "developed", "implemented", "improved", "optimized",
-    "created", "managed", "delivered", "launched", "increased", "reduced", "automated",
-    "architected", "migrated", "scaled", "collaborated", "mentored", "analyzed",
-    "engineered", "deployed", "owned", "drove", "achieved", "streamlined", "spearheaded",
-    "orchestrated", "refactored", "shipped", "negotiated", "established", "facilitated",
+    "led",
+    "built",
+    "designed",
+    "developed",
+    "implemented",
+    "improved",
+    "optimized",
+    "created",
+    "managed",
+    "delivered",
+    "launched",
+    "increased",
+    "reduced",
+    "automated",
+    "architected",
+    "migrated",
+    "scaled",
+    "collaborated",
+    "mentored",
+    "analyzed",
+    "engineered",
+    "deployed",
+    "owned",
+    "drove",
+    "achieved",
+    "streamlined",
+    "spearheaded",
+    "orchestrated",
+    "refactored",
+    "shipped",
+    "negotiated",
+    "established",
+    "facilitated",
 }
 
 SECTION_PATTERNS = {
@@ -52,11 +80,15 @@ SECTION_PATTERNS = {
     "experience": re.compile(
         r"\b(experience|work history|employment|professional experience|work experience)\b", re.I
     ),
-    "skills": re.compile(r"\b(skills|technologies|tech stack|competencies|technical skills)\b", re.I),
+    "skills": re.compile(
+        r"\b(skills|technologies|tech stack|competencies|technical skills)\b", re.I
+    ),
     "education": re.compile(
         r"\b(education|university|bachelor|master|degree|b\.?s\.?|m\.?s\.?|phd)\b", re.I
     ),
-    "projects": re.compile(r"\b(projects|personal projects|key projects|selected projects)\b", re.I),
+    "projects": re.compile(
+        r"\b(projects|personal projects|key projects|selected projects)\b", re.I
+    ),
     "contact": re.compile(
         r"(\b[\w.+-]+@[\w.-]+\.\w{2,}\b)|(\+?\d[\d\s().-]{7,}\d)|(linkedin\.com|github\.com)",
         re.I,
@@ -64,10 +96,43 @@ SECTION_PATTERNS = {
 }
 
 STOP = {
-    "and", "the", "for", "with", "you", "our", "are", "will", "this", "that", "from",
-    "your", "have", "has", "been", "using", "work", "role", "team", "job", "ability",
-    "strong", "experience", "years", "year", "etc", "including", "required", "preferred",
-    "must", "should", "able", "plus", "well", "good", "great", "looking",
+    "and",
+    "the",
+    "for",
+    "with",
+    "you",
+    "our",
+    "are",
+    "will",
+    "this",
+    "that",
+    "from",
+    "your",
+    "have",
+    "has",
+    "been",
+    "using",
+    "work",
+    "role",
+    "team",
+    "job",
+    "ability",
+    "strong",
+    "experience",
+    "years",
+    "year",
+    "etc",
+    "including",
+    "required",
+    "preferred",
+    "must",
+    "should",
+    "able",
+    "plus",
+    "well",
+    "good",
+    "great",
+    "looking",
 }
 
 
@@ -78,6 +143,7 @@ def _normalize(text: str) -> str:
 # ═══════════════════════════════════════════════════════════════════════════
 # Layer 1 — Rule-based
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 def extract_jd_keywords(job_description: str, limit: int = 45) -> list[str]:
     text = _normalize(job_description)
@@ -276,6 +342,7 @@ def layer1_rules(resume_text: str, job_description: str) -> dict[str, Any]:
 # Layer 2 — Semantic (Chroma distances)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def layer2_semantic(
     distances: list[float] | None = None,
     chunk_count: int = 0,
@@ -331,6 +398,7 @@ def layer2_semantic(
 # Layer 3 — LLM qualitative (bounded)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def layer3_from_llm_payload(payload: dict | None) -> dict[str, Any]:
     """
     Map LLM qualitative assessment into 0–L3_CAP points.
@@ -383,6 +451,7 @@ def layer3_unavailable(reason: str = "LLM unavailable") -> dict[str, Any]:
 # Combine layers
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def build_display_scores(
     l1: dict[str, Any],
     l2: dict[str, Any],
@@ -421,7 +490,9 @@ def build_display_scores(
     # Relevance: semantic similarity + LLM qualitative + quantified/verbs signal
     if l2.get("available"):
         # best/avg already 0–100 style in layer2
-        sem = (float(l2.get("best_similarity") or 0) * 0.6 + float(l2.get("avg_similarity") or 0) * 0.4)
+        sem = (
+            float(l2.get("best_similarity") or 0) * 0.6 + float(l2.get("avg_similarity") or 0) * 0.4
+        )
     else:
         # fallback: keyword + impact blend when vectors missing
         q_max = float(quant.get("max") or 1) or 1.0
@@ -466,7 +537,9 @@ def build_display_scores(
             suggestions.append(str(imp))
 
     if not suggestions:
-        suggestions.append("Strong overall fit — tailor a few bullets more specifically to this role.")
+        suggestions.append(
+            "Strong overall fit — tailor a few bullets more specifically to this role."
+        )
 
     return {
         "overall": overall,

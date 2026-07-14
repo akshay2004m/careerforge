@@ -1,13 +1,11 @@
 from app.services.ats_analyzer import (
-    analyze_resume,
+    combine_layers,
     layer1_rules,
     layer2_semantic,
     layer3_from_llm_payload,
-    combine_layers,
     score_before_after,
 )
 from app.services.ats_scorer import compute_ats_score
-
 
 SAMPLE_RESUME = """
 Jane Doe
@@ -78,14 +76,19 @@ def test_three_layer_combine():
     assert "rule_based" in result["layers"]
     assert "semantic" in result["layers"]
     assert "llm_qualitative" in result["layers"]
-    assert result["layer_scores"]["rules"] + result["layer_scores"]["semantic"] + result[
-        "layer_scores"
-    ]["llm"] == result["ats_score"] or abs(
+    assert (
         result["layer_scores"]["rules"]
         + result["layer_scores"]["semantic"]
         + result["layer_scores"]["llm"]
-        - result["ats_score"]
-    ) < 0.2
+        == result["ats_score"]
+        or abs(
+            result["layer_scores"]["rules"]
+            + result["layer_scores"]["semantic"]
+            + result["layer_scores"]["llm"]
+            - result["ats_score"]
+        )
+        < 0.2
+    )
     # Professional display cards
     ds = result["display_scores"]
     assert 0 <= ds["keyword_match"] <= 100

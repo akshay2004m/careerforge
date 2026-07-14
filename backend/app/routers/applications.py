@@ -1,13 +1,15 @@
-from datetime import datetime
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.models import User, Application, Resume
+from app.models.models import Application, Resume, User
 from app.schemas.schemas import (
     ApplicationCreate,
-    ApplicationUpdate,
     ApplicationResponse,
+    ApplicationUpdate,
 )
 from app.services.skills import extract_skills
 
@@ -54,7 +56,9 @@ def create_application(
 ):
     status = (body.status or "applied").lower()
     if status not in VALID_STATUSES:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Use one of {sorted(VALID_STATUSES)}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid status. Use one of {sorted(VALID_STATUSES)}"
+        )
 
     if body.resume_id:
         resume = (
@@ -80,7 +84,7 @@ def create_application(
         tailored_resume_id=body.tailored_resume_id,
         ats_score=body.ats_score,
         skills=skills,
-        updated_at=datetime.utcnow(),
+        updated_at=datetime.now(timezone.utc),
     )
     db.add(app)
     db.commit()
@@ -112,7 +116,7 @@ def update_application(
 
     for k, v in data.items():
         setattr(app, k, v)
-    app.updated_at = datetime.utcnow()
+    app.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(app)
     return _to_response(app)

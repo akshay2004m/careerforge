@@ -2,12 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import engine, Base, ping_db, SessionLocal
+from app.core.database import Base, SessionLocal, engine, ping_db
 from app.core.errors import register_exception_handlers
-from app.core.logging_config import setup_logging, RequestLoggingMiddleware
-from app.core.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
+from app.core.logging_config import RequestLoggingMiddleware, setup_logging
+from app.core.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 from app.models import models  # noqa: F401
-from app.routers import auth, resume, optimize, interview, applications, analytics, skills
+from app.routers import analytics, applications, auth, interview, optimize, resume, skills
 from app.services.vector_store import vector_health
 
 setup_logging()
@@ -21,6 +21,7 @@ def _normalize_user_emails() -> None:
     """One-shot heal: store all emails lowercased (fixes legacy login misses)."""
     try:
         from sqlalchemy.orm import Session
+
         from app.models.models import User
 
         db: Session = SessionLocal()
@@ -31,11 +32,7 @@ def _normalize_user_emails() -> None:
                     continue
                 low = u.email.strip().lower()
                 if u.email != low:
-                    clash = (
-                        db.query(User)
-                        .filter(User.email == low, User.id != u.id)
-                        .first()
-                    )
+                    clash = db.query(User).filter(User.email == low, User.id != u.id).first()
                     if clash:
                         continue
                     u.email = low

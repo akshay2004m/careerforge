@@ -1,8 +1,11 @@
-import fitz
 import logging
+
+import fitz
+
 from app.core.exceptions import ResumeParseError
 
 logger = logging.getLogger("careerforge.parser")
+
 
 def parse_resume(file_path: str):
     """
@@ -17,7 +20,9 @@ def parse_resume(file_path: str):
                 text += page.get_text()
     except Exception as e:
         logger.error(f"Failed to parse PDF {file_path}: {e}")
-        raise ResumeParseError(f"Could not read the PDF file. It might be corrupted or password-protected. Details: {e}")
+        raise ResumeParseError(
+            f"Could not read the PDF file. It might be corrupted or password-protected. Details: {e}"
+        )
 
     text = text.strip()
     lines = [ln.strip() for ln in text.splitlines() if ln.strip()]

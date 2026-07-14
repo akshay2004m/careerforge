@@ -134,9 +134,7 @@ async def stt_transcribe_once(
         raise HTTPException(status_code=400, detail="Audio file too large (max 25 MB)")
 
     try:
-        result = await asyncio.to_thread(
-            transcribe_bytes, data, file.filename or "audio.webm"
-        )
+        result = await asyncio.to_thread(transcribe_bytes, data, file.filename or "audio.webm")
         return result
     except Exception as e:
         logger.exception("One-shot transcription failed")
@@ -236,7 +234,7 @@ async def ws_transcribe(
             {
                 "type": "status",
                 "message": "auth_required",
-                "detail": "Send {\"type\":\"auth\",\"token\":\"<jwt>\"} or reconnect with ?token=",
+                "detail": 'Send {"type":"auth","token":"<jwt>"} or reconnect with ?token=',
             },
         )
         try:
@@ -300,7 +298,7 @@ async def ws_transcribe(
             websocket,
             {
                 "type": "ready",
-                "message": "Connected. Stream audio; send {\"type\":\"end\"} to finalize.",
+                "message": 'Connected. Stream audio; send {"type":"end"} to finalize.',
                 "format": fmt,
                 "sample_rate": 16000,
                 "channels": 1,
@@ -444,9 +442,7 @@ async def ws_transcribe(
 
             if msg_type == "reset":
                 session.reset()
-                await _ws_send(
-                    websocket, {"type": "status", "message": "buffer cleared"}
-                )
+                await _ws_send(websocket, {"type": "status", "message": "buffer cleared"})
                 continue
 
             if msg_type in {"end", "stop", "finalize"}:

@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
-from sqlalchemy.orm import Session
 import os
 import re
-from app.core.database import get_db
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
-from app.models.models import Resume, User
-from app.schemas.schemas import ResumeUploadResponse, ResumeSummary, ResumeUpdate
-from app.services.parser import parse_resume
+from app.core.database import get_db
 from app.core.security import get_current_user
-from app.services.vector_store import index_resume, delete_resume_vectors
+from app.models.models import Resume, User
+from app.schemas.schemas import ResumeSummary, ResumeUpdate, ResumeUploadResponse
+from app.services.parser import parse_resume
+from app.services.vector_store import delete_resume_vectors, index_resume
 
 router = APIRouter()
 
@@ -126,9 +128,7 @@ def update_resume(
     current_user: User = Depends(get_current_user),
 ):
     resume = (
-        db.query(Resume)
-        .filter(Resume.id == resume_id, Resume.user_id == current_user.id)
-        .first()
+        db.query(Resume).filter(Resume.id == resume_id, Resume.user_id == current_user.id).first()
     )
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -153,9 +153,7 @@ def delete_resume(
     current_user: User = Depends(get_current_user),
 ):
     resume = (
-        db.query(Resume)
-        .filter(Resume.id == resume_id, Resume.user_id == current_user.id)
-        .first()
+        db.query(Resume).filter(Resume.id == resume_id, Resume.user_id == current_user.id).first()
     )
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -168,7 +166,8 @@ def delete_resume(
             pass
 
     # Manually cascade delete to avoid SQLite foreign key constraint failures
-    from app.models.models import TailoredResume, Application
+    from app.models.models import Application, TailoredResume
+
     db.query(TailoredResume).filter(TailoredResume.resume_id == resume.id).delete()
     db.query(Application).filter(Application.resume_id == resume.id).update({"resume_id": None})
 

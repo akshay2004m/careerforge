@@ -1,6 +1,7 @@
 """HTTP layer for skill extraction — business logic lives in app.services.skills."""
 
 from fastapi import APIRouter, Depends, HTTPException
+
 from app.core.security import get_current_user
 from app.models.models import User
 from app.schemas.schemas import SkillExtractRequest, SkillExtractResponse

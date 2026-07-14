@@ -1,12 +1,12 @@
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from jose import JWTError, jwt
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-import bcrypt
-import re
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -68,11 +68,7 @@ def get_user_by_email(db: Session, email: str) -> Optional[User]:
     # Fallback for legacy mixed-case rows
     from sqlalchemy import func
 
-    return (
-        db.query(User)
-        .filter(func.lower(User.email) == normalized)
-        .first()
-    )
+    return db.query(User).filter(func.lower(User.email) == normalized).first()
 
 
 def get_current_user(

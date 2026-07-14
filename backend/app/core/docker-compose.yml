@@ -23,4 +23,4 @@ services:
       - mysql
 
 volumes:
-  mysql-data: 
+  mysql-data:

@@ -48,11 +48,22 @@ def _ensure_cuda_dll_path() -> list[str]:
         from pathlib import Path
 
         candidates: list[Path] = []
-        for sp in site.getsitepackages() + ([site.getusersitepackages()] if site.getusersitepackages() else []):
+        for sp in site.getsitepackages() + (
+            [site.getusersitepackages()] if site.getusersitepackages() else []
+        ):
             nvidia_root = Path(sp) / "nvidia"
             if not nvidia_root.is_dir():
                 continue
-            for sub in ("cublas", "cuda_runtime", "cudnn", "cuda_nvrtc", "cufft", "curand", "cusolver", "cusparse"):
+            for sub in (
+                "cublas",
+                "cuda_runtime",
+                "cudnn",
+                "cuda_nvrtc",
+                "cufft",
+                "curand",
+                "cusolver",
+                "cusparse",
+            ):
                 bin_dir = nvidia_root / sub / "bin"
                 if bin_dir.is_dir():
                     candidates.append(bin_dir)
@@ -223,9 +234,7 @@ def model_info() -> dict[str, Any]:
         {
             "model": _model_meta.get("path", settings.WHISPER_MODEL),
             "device": _model_meta.get("device_resolved", settings.WHISPER_DEVICE),
-            "compute_type": _model_meta.get(
-                "compute_type_resolved", settings.WHISPER_COMPUTE_TYPE
-            ),
+            "compute_type": _model_meta.get("compute_type_resolved", settings.WHISPER_COMPUTE_TYPE),
         }
         if _model is not None
         else resolve_runtime()
@@ -376,10 +385,8 @@ def get_whisper_model():
             except Exception:
                 gpu_name = "cuda:0"
 
-        msg = (
-            f"[STT] Loading faster-whisper: {model_size} on {device.upper()} "
-            f"({compute_type})"
-            + (f" — {gpu_name}" if gpu_name else "")
+        msg = f"[STT] Loading faster-whisper: {model_size} on {device.upper()} ({compute_type})" + (
+            f" — {gpu_name}" if gpu_name else ""
         )
         print(msg)
         logger.info(msg)
@@ -468,10 +475,11 @@ def convert_to_wav(audio_bytes: bytes, input_format: str = "webm") -> bytes:
 
     try:
         # Already WAV with RIFF header — still run through voice filters
-        in_fmt = "wav" if (
-            fmt == "wav"
-            or (audio_bytes[:4] == b"RIFF" and audio_bytes[8:12] == b"WAVE")
-        ) else fmt
+        in_fmt = (
+            "wav"
+            if (fmt == "wav" or (audio_bytes[:4] == b"RIFF" and audio_bytes[8:12] == b"WAVE"))
+            else fmt
+        )
 
         process = (
             ffmpeg_py.input("pipe:0", format=in_fmt)
@@ -506,7 +514,6 @@ def convert_to_wav(audio_bytes: bytes, input_format: str = "webm") -> bytes:
 
 def _pcm_to_wav(pcm: bytes, sample_rate: int = 16_000) -> bytes:
     import io
-    import struct
     import wave
 
     buf = io.BytesIO()
@@ -756,9 +763,7 @@ class FasterWhisperStreaming:
                 self._commit_window_text()
                 self.audio_buffer = self.audio_buffer[-ROLLING_WINDOW_BYTES:]
                 # Keep a little stride credit so we don't immediately re-decode
-                self._bytes_since_decode = min(
-                    self._bytes_since_decode, DECODE_STRIDE_BYTES // 2
-                )
+                self._bytes_since_decode = min(self._bytes_since_decode, DECODE_STRIDE_BYTES // 2)
 
             chunk_rms = pcm_rms(pcm_piece)
             # --- Silence: do NOT grow transcript; optionally commit & clear ---
@@ -855,9 +860,7 @@ class FasterWhisperStreaming:
                 if pcm_rms(self.audio_buffer) >= SILENCE_RMS:
                     self._transcribing = True
                     try:
-                        final_window = self._transcribe_pcm(
-                            self.audio_buffer, is_final=True
-                        )
+                        final_window = self._transcribe_pcm(self.audio_buffer, is_final=True)
                     finally:
                         self._transcribing = False
 
@@ -918,9 +921,7 @@ class FasterWhisperStreaming:
         if self.format == "pcm":
             return audio_chunk if len(audio_chunk) % 2 == 0 else audio_chunk[:-1]
 
-        if self.format == "wav" or (
-            audio_chunk[:4] == b"RIFF" and audio_chunk[8:12] == b"WAVE"
-        ):
+        if self.format == "wav" or (audio_chunk[:4] == b"RIFF" and audio_chunk[8:12] == b"WAVE"):
             try:
                 return _wav_to_pcm(audio_chunk)
             except Exception:
@@ -1040,10 +1041,7 @@ def _wav_to_pcm(wav_bytes: bytes) -> bytes:
 
         n = len(frames) // 2
         samples = struct.unpack("<" + "h" * n, frames)
-        mono = [
-            int(sum(samples[i : i + channels]) / channels)
-            for i in range(0, n, channels)
-        ]
+        mono = [int(sum(samples[i : i + channels]) / channels) for i in range(0, n, channels)]
         frames = struct.pack("<" + "h" * len(mono), *mono)
     if rate != 16_000 and rate > 0:
         # crude downsample

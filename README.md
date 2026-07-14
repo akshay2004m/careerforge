@@ -106,8 +106,8 @@ alembic upgrade head
 ```
 
 - **SQLite** is the default for local demos (`DATABASE_URL=sqlite:///./careerforge.db`).
-- **PostgreSQL** is production-ready: set  
-  `DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/careerforge`  
+- **PostgreSQL** is production-ready: set
+  `DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/careerforge`
   then `alembic upgrade head`. Pool settings: `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`.
 
 `Base.metadata.create_all` still runs on startup for empty local DBs; Alembic is the source of truth for schema evolution.
@@ -154,7 +154,7 @@ alembic upgrade head
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8002
 ```
 
-Health (includes DB + vector status): http://127.0.0.1:8002/health  
+Health (includes DB + vector status): http://127.0.0.1:8002/health
 Docs: http://127.0.0.1:8002/docs
 
 ### Frontend

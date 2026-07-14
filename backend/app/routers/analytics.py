@@ -1,10 +1,11 @@
 from collections import Counter
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.models import User, Application, Resume, TailoredResume
+from app.models.models import Application, Resume, TailoredResume, User
 from app.schemas.schemas import AnalyticsResponse
 
 router = APIRouter()
@@ -44,15 +45,14 @@ def analytics_summary(
     avg = sum(scores) / len(scores) if scores else 0.0
     best = max(scores) if scores else 0.0
 
-    decided = by_status.get("offer", 0) + by_status.get("rejected", 0) + by_status.get("interview", 0)
-    success_rate = (
-        (by_status.get("offer", 0) / decided) * 100 if decided else 0.0
+    decided = (
+        by_status.get("offer", 0) + by_status.get("rejected", 0) + by_status.get("interview", 0)
     )
+    success_rate = (by_status.get("offer", 0) / decided) * 100 if decided else 0.0
 
     company_counts = Counter((a.company or "Unknown").strip() or "Unknown" for a in apps)
     top_companies = [
-        {"company": name, "count": count}
-        for name, count in company_counts.most_common(5)
+        {"company": name, "count": count} for name, count in company_counts.most_common(5)
     ]
 
     recent = []

@@ -7,9 +7,10 @@ def _seed_resume(client, headers, text="Engineer resume with Python FastAPI AWS 
     # by calling an internal helper: create resume via direct API if available.
     # We'll use the TestClient + override by posting to a thin test-only path is not available.
     # Instead create user resume through sqlalchemy session from client app.
+    from datetime import datetime, timezone
+
     from app.core.database import get_db
-    from app.models.models import Resume, User
-    from datetime import datetime
+    from app.models.models import Resume
 
     # Get user id
     me = client.get("/api/auth/me", headers=headers).json()
@@ -23,7 +24,7 @@ def _seed_resume(client, headers, text="Engineer resume with Python FastAPI AWS 
             original_text=text * 3,
             parsed_data={"status": "parsed"},
             is_primary=True,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db.add(resume)
         db.commit()

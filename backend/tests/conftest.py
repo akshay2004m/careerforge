@@ -73,11 +73,13 @@ def auth_headers(client):
 @pytest.fixture(autouse=True)
 def mock_parser(monkeypatch):
     """Mock the PDF parsing so we don't need real PDFs for router tests."""
+
     def fake_parse(file_path: str):
         text = "This is a mock resume text for a Software Engineer."
         parsed_data = {
             "skills": ["Python", "FastAPI", "React"],
-            "experience": ["Software Engineer at TechCorp"]
+            "experience": ["Software Engineer at TechCorp"],
         }
         return text, parsed_data
+
     monkeypatch.setattr("app.routers.resume.parse_resume", fake_parse)

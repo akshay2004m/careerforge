@@ -3,23 +3,90 @@
 from __future__ import annotations
 
 import re
-from app.services.ai_optimizer import get_llm, _extract_json
+
 from langchain_core.prompts import ChatPromptTemplate
+
+from app.services.ai_optimizer import _extract_json, get_llm
 
 # Common tech/soft skills dictionary for fast offline extraction
 KNOWN_SKILLS = [
-    "python", "java", "javascript", "typescript", "react", "next.js", "node.js",
-    "fastapi", "django", "flask", "sql", "postgresql", "mysql", "mongodb",
-    "aws", "azure", "gcp", "docker", "kubernetes", "redis", "graphql", "rest",
-    "api", "git", "ci/cd", "linux", "html", "css", "tailwind", "vue", "angular",
-    "c++", "c#", "go", "rust", "kotlin", "swift", "scala", "r", "matlab",
-    "pandas", "numpy", "pytorch", "tensorflow", "scikit-learn", "spark",
-    "hadoop", "airflow", "kafka", "elasticsearch", "terraform", "ansible",
-    "leadership", "communication", "agile", "scrum", "project management",
-    "system design", "microservices", "machine learning", "data analysis",
-    "nlp", "llm", "langchain", "prompt engineering", "excel", "tableau",
-    "power bi", "figma", "product management", "stakeholder management",
-    "unit testing", "pytest", "jest", "selenium", "security", "oauth",
+    "python",
+    "java",
+    "javascript",
+    "typescript",
+    "react",
+    "next.js",
+    "node.js",
+    "fastapi",
+    "django",
+    "flask",
+    "sql",
+    "postgresql",
+    "mysql",
+    "mongodb",
+    "aws",
+    "azure",
+    "gcp",
+    "docker",
+    "kubernetes",
+    "redis",
+    "graphql",
+    "rest",
+    "api",
+    "git",
+    "ci/cd",
+    "linux",
+    "html",
+    "css",
+    "tailwind",
+    "vue",
+    "angular",
+    "c++",
+    "c#",
+    "go",
+    "rust",
+    "kotlin",
+    "swift",
+    "scala",
+    "r",
+    "matlab",
+    "pandas",
+    "numpy",
+    "pytorch",
+    "tensorflow",
+    "scikit-learn",
+    "spark",
+    "hadoop",
+    "airflow",
+    "kafka",
+    "elasticsearch",
+    "terraform",
+    "ansible",
+    "leadership",
+    "communication",
+    "agile",
+    "scrum",
+    "project management",
+    "system design",
+    "microservices",
+    "machine learning",
+    "data analysis",
+    "nlp",
+    "llm",
+    "langchain",
+    "prompt engineering",
+    "excel",
+    "tableau",
+    "power bi",
+    "figma",
+    "product management",
+    "stakeholder management",
+    "unit testing",
+    "pytest",
+    "jest",
+    "selenium",
+    "security",
+    "oauth",
 ]
 
 
@@ -31,7 +98,11 @@ def extract_skills_rules(job_description: str) -> list[str]:
         pattern = r"(?<![a-z0-9])" + re.escape(skill) + r"(?![a-z0-9])"
         if re.search(pattern, text):
             # pretty label
-            label = skill.upper() if skill in {"sql", "aws", "gcp", "api", "nlp", "llm", "ci/cd"} else skill.title()
+            label = (
+                skill.upper()
+                if skill in {"sql", "aws", "gcp", "api", "nlp", "llm", "ci/cd"}
+                else skill.title()
+            )
             if skill == "next.js":
                 label = "Next.js"
             elif skill == "node.js":

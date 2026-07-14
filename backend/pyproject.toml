@@ -1,0 +1,36 @@
+[tool.ruff]
+# Target Python version.
+target-version = "py311"
+
+# Maximum line length — matches the project convention.
+line-length = 100
+
+# Exclude generated / vendored directories.
+exclude = [
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    "alembic/versions",
+    "chroma_data",
+    "vosk_model",
+]
+
+[tool.ruff.lint]
+# Rules: F = Pyflakes, E = pycodestyle errors, W = pycodestyle warnings, I = isort.
+select = ["F", "E", "W", "I"]
+
+# Ignore line-length lint — line-length is already enforced by the formatter.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow unused imports in __init__.py and Alembic migrations.
+"__init__.py" = ["F401"]
+"alembic/versions/*.py" = ["E402"]
+
+# Whitespace inside multi-line string literals (can't be auto-fixed safely).
+"services/ai_optimizer.py" = ["W293"]
+"tests/test_ats_analyzer.py" = ["W291"]
+
+[tool.ruff.format]
+# Use black-compatible formatting (default).
+quote-style = "double"

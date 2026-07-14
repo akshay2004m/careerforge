@@ -10,6 +10,14 @@ backend/chroma_data/
 backend/uploads/
 backend/.pytest_cache/
 
+# Stale duplicate backend files (originals live under backend/app/)
+backend/core/
+backend/models/
+backend/schemas/
+backend/services/
+backend/routers/
+backend/test_llm.py
+
 # Node/Next.js
 frontend/node_modules/
 frontend/.next/

@@ -229,9 +229,10 @@ def query_relevant_chunks(
     n_results: int = 4,
 ) -> List[str]:
     """Back-compat: return only chunk texts."""
-    return query_relevant_chunks_detailed(
-        user_id, resume_id, job_description, n_results
-    ).get("chunks") or []
+    return (
+        query_relevant_chunks_detailed(user_id, resume_id, job_description, n_results).get("chunks")
+        or []
+    )
 
 
 def vector_health() -> dict:
