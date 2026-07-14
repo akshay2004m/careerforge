@@ -1,0 +1,571 @@
+@import "tailwindcss";
+
+/* ─── Design tokens ─── */
+:root,
+html.dark {
+  color-scheme: dark;
+  --background: #07070a;
+  --background-elevated: #0c0c10;
+  --foreground: #f4f4f5;
+  --foreground-secondary: #a1a1aa;
+  --muted: #71717a;
+  --card: rgba(18, 18, 24, 0.4);
+  --card-hover: rgba(22, 22, 31, 0.6);
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-border-strong: rgba(255, 255, 255, 0.1);
+  --input: #0a0a0e;
+  --input-border: rgba(255, 255, 255, 0.1);
+  --ring: rgba(139, 92, 246, 0.45);
+  --primary: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --primary-soft: rgba(139, 92, 246, 0.12);
+  --primary-border: rgba(139, 92, 246, 0.35);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.12);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 0 1px rgba(139, 92, 246, 0.15), 0 12px 40px rgba(88, 28, 135, 0.18);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --sidebar-width: 272px;
+  --surface-noise: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.15), transparent);
+}
+
+html.light {
+  color-scheme: light;
+  --background: #f6f5f8;
+  --background-elevated: #ffffff;
+  --foreground: #18181b;
+  --foreground-secondary: #52525b;
+  --muted: #71717a;
+  --card: rgba(255, 255, 255, 0.5);
+  --card-hover: rgba(250, 250, 250, 0.7);
+  --card-border: rgba(24, 24, 27, 0.08);
+  --card-border-strong: rgba(24, 24, 27, 0.12);
+  --input: #ffffff;
+  --input-border: rgba(24, 24, 27, 0.12);
+  --ring: rgba(124, 58, 237, 0.35);
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-soft: rgba(124, 58, 237, 0.08);
+  --primary-border: rgba(124, 58, 237, 0.25);
+  --success: #059669;
+  --success-soft: rgba(5, 150, 105, 0.1);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.1);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
+  --info: #2563eb;
+  --info-soft: rgba(37, 99, 235, 0.1);
+  --shadow-sm: 0 1px 2px rgba(15, 15, 20, 0.04);
+  --shadow-md: 0 8px 30px rgba(15, 15, 20, 0.06);
+  --shadow-glow: 0 0 0 1px rgba(124, 58, 237, 0.1), 0 16px 40px rgba(124, 58, 237, 0.08);
+  --surface-noise: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(124, 58, 237, 0.08), transparent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ─── Base ─── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-feature-settings: "ss01" on, "cv11" on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 50%, transparent) transparent;
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+input,
+textarea,
+button,
+select {
+  font: inherit;
+}
+
+/* ─── Surfaces ─── */
+.cf-page {
+  position: relative;
+}
+
+.cf-page::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: var(--surface-noise);
+  z-index: 0;
+}
+
+.cf-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+.cf-card {
+  background: var(--card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), var(--shadow-sm);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.cf-card-interactive:hover {
+  border-color: var(--primary-border);
+  background: var(--card-hover);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.cf-card-flat {
+  background: var(--card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), var(--shadow-sm);
+  border-radius: var(--radius-md);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.cf-card-hover:hover {
+  background: var(--card-hover);
+  border-color: var(--card-border-strong);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.cf-glass {
+  background: var(--card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--card-border);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), var(--shadow-sm);
+}
+
+/* ─── Buttons ─── */
+.cf-muted {
+  color: var(--muted);
+}
+
+.cf-secondary {
+  color: var(--foreground-secondary);
+}
+
+.cf-input {
+  width: 100%;
+  background: var(--input);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.cf-input::placeholder {
+  color: var(--muted);
+}
+
+.cf-input:hover {
+  border-color: var(--card-border-strong);
+}
+
+.cf-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.cf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease,
+    opacity 0.15s ease,
+    box-shadow 0.15s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.cf-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.cf-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cf-btn-primary {
+  background: linear-gradient(180deg, #9b6dff 0%, var(--primary) 100%);
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 8px 20px rgba(124, 58, 237, 0.25);
+}
+
+.cf-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #8b5cf6 0%, var(--primary-hover) 100%);
+}
+
+.cf-btn-secondary {
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--card-border);
+}
+
+.cf-btn-secondary:hover:not(:disabled) {
+  border-color: var(--card-border-strong);
+  background: var(--card-hover);
+}
+
+.cf-btn-ghost {
+  background: transparent;
+  color: var(--foreground-secondary);
+}
+
+.cf-btn-ghost:hover:not(:disabled) {
+  background: var(--primary-soft);
+  color: var(--foreground);
+}
+
+.cf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  border: 1px solid transparent;
+}
+
+.cf-badge-primary {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary-border);
+}
+
+.cf-badge-success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.cf-badge-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.cf-badge-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.cf-badge-info {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.cf-badge-muted {
+  background: color-mix(in srgb, var(--muted) 15%, transparent);
+  color: var(--muted);
+}
+
+.cf-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cf-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--foreground-secondary);
+  margin-bottom: 0.45rem;
+}
+
+.cf-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--card) 0%,
+    color-mix(in srgb, var(--muted) 18%, var(--card)) 50%,
+    var(--card) 100%
+  );
+  background-size: 200% 100%;
+  animation: cf-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes cf-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes cf-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cf-animate-in {
+  animation: cf-fade-up 0.4s ease both;
+}
+
+.cf-delay-1 {
+  animation-delay: 0.05s;
+}
+.cf-delay-2 {
+  animation-delay: 0.1s;
+}
+.cf-delay-3 {
+  animation-delay: 0.15s;
+}
+.cf-delay-4 {
+  animation-delay: 0.2s;
+}
+
+/* Sidebar nav active pill */
+.cf-nav-active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.05);
+  position: relative;
+}
+
+.cf-nav-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #a78bfa, var(--primary));
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.55);
+}
+
+/* Mobile drawer */
+.cf-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* ─── Theme switch animation ─── */
+html.theme-transitioning,
+html.theme-transitioning body,
+html.theme-transitioning body * {
+  transition:
+    background-color 0.4s ease,
+    color 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    fill 0.35s ease,
+    stroke 0.35s ease,
+    opacity 0.35s ease !important;
+}
+
+/* View Transitions API cross-fade (supporting browsers) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: cf-theme-fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: cf-theme-fade-in;
+}
+
+@keyframes cf-theme-fade-out {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+@keyframes cf-theme-fade-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+/* Theme toggle icon spin */
+@keyframes cf-theme-spin {
+  0% {
+    transform: rotate(-90deg) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.cf-theme-icon {
+  animation: cf-theme-spin 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+/* Page enter animation */
+@keyframes cf-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cf-page-enter {
+  animation: cf-page-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cf-pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.cf-pulse-soft {
+  animation: cf-pulse-soft 1.8s ease-in-out infinite;
+}
+
+@keyframes cf-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.cf-slide-in {
+  animation: cf-slide-in-right 0.4s ease both;
+}
+
+@keyframes cf-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cf-scale-in {
+  animation: cf-scale-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Active page pill in top bar */
+.cf-current-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-border);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.cf-current-page-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+  animation: cf-pulse-soft 2s ease-in-out infinite;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --sidebar-width: 0px;
+  }
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transitioning,
+  html.theme-transitioning body,
+  html.theme-transitioning body *,
+  .cf-page-enter,
+  .cf-animate-in,
+  .cf-slide-in,
+  .cf-scale-in,
+  .cf-theme-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+}

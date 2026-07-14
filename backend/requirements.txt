@@ -1,0 +1,34 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+sqlalchemy==2.0.35
+pymysql==1.1.1
+alembic==1.13.2
+python-jose[cryptography]==3.3.0
+bcrypt==4.2.1
+python-multipart==0.0.9
+pydantic==2.9.2
+pydantic-settings==2.6.1
+email-validator==2.2.0
+langchain==0.3.0
+langchain-groq==0.2.0
+langchain-core>=0.3.0
+pymupdf==1.24.10
+pdfplumber==0.11.4
+python-dotenv==1.0.1
+groq>=0.11.0
+openai>=1.40.0
+chromadb==0.5.5
+pytest==8.3.3
+httpx==0.27.2
+websockets
+faster-whisper>=1.0.3
+ffmpeg-python>=0.2.0
+# CUDA 12 runtime DLLs for Windows GPU (cublas64_12.dll etc. for ctranslate2)
+nvidia-cublas-cu12
+nvidia-cuda-runtime-cu12
+nvidia-cudnn-cu12
+nvidia-cuda-nvrtc-cu12
+# Optional but recommended for slightly faster CPU matmul on Windows/Linux:
+# pip install intel-openmp
+# ffmpeg binary must also be on PATH (Winget: Gyan.FFmpeg).
+psycopg2-binary>=2.9.9
