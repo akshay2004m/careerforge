@@ -1,209 +1,161 @@
-# CareerForge AI
+<div align="center">
+  <img src="https://img.shields.io/badge/CareerForge_AI-4F46E5?style=for-the-badge&logo=openai&logoColor=white" alt="CareerForge AI" />
+  <h1>CareerForge AI 🚀</h1>
+  <p><strong>Your Ultimate AI-Powered Career Coach & Job Application Strategist</strong></p>
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Pytest](https://img.shields.io/badge/pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)](https://docs.pytest.org/en/stable/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)](https://github.com/features/actions)
+  <p>
+    <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi" alt="FastAPI" /></a>
+    <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js" alt="Next.js" /></a>
+    <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+    <a href="https://docs.pytest.org/en/stable/"><img src="https://img.shields.io/badge/Pytest-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white" alt="Pytest" /></a>
+    <a href="https://github.com/features/actions"><img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white" alt="GitHub Actions" /></a>
+  </p>
+</div>
 
-AI-powered career coaching: resume optimization (SQL + vector hybrid retrieval), cover letters, ATS scoring, application tracking, and mock interviews with Whisper STT.
+---
 
-## Architecture overview
+## 🌟 Overview
 
-```
-┌─────────────┐     JWT      ┌──────────────────┐
-│  Next.js UI │ ───────────► │  FastAPI API     │
-└─────────────┘              └────────┬─────────┘
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    ▼                 ▼                 ▼
-             ┌──────────┐      ┌───────────┐     ┌────────────┐
-             │ SQL DB   │      │  Chroma   │     │  LLM APIs  │
-             │(SQLite/  │      │ (vectors) │     │ Groq/OpenAI│
-             │ Postgres)│      └───────────┘     └────────────┘
-             └──────────┘
-```
+CareerForge AI is a comprehensive, AI-powered career coaching platform designed to give job seekers a competitive edge. By combining modern web technologies with advanced Artificial Intelligence, CareerForge AI automates and optimizes the job application process.
 
-### Why SQL **and** a Vector DB (Chroma)?
+### Core Features:
+- 📄 **Resume Optimization:** Tailor your resume to specific Job Descriptions using a hybrid SQL + Vector (ChromaDB) retrieval system.
+- 🎯 **ATS Scoring Engine:** A transparent, explainable 3-layer scoring system (Rules + Semantic + LLM).
+- 📝 **Cover Letter Generation:** Generate highly relevant, contextual cover letters instantly.
+- 📊 **Application Tracking System:** Track your job applications, statuses, and progression over time.
+- 🎙️ **Mock Interviews:** Real-time AI interview practice with speech-to-text using OpenAI Whisper.
 
-| Store | Owns | Interview talking point |
-|-------|------|-------------------------|
-| **SQL (SQLAlchemy)** | Users, auth hashes, resumes metadata, applications, ATS scores, FKs, constraints | ACID ownership, multi-tenant isolation via `user_id`, indexes for list/filter queries |
-| **Chroma (vector)** | Chunked resume embeddings for semantic search | ANN retrieval: “which resume bullets best match this JD?” without full-table scans |
+---
 
-**Hybrid path on optimize:**
-1. Load resume row from SQL (authorized by JWT + `user_id`)
-2. Query Chroma for top-k chunks filtered by `{user_id, resume_id}`
-3. Pass focused evidence + full resume to the LLM
-4. Persist tailored result + optional Application row in SQL
+## 🏛️ Architecture
 
-## Stack
-
-- **Frontend:** Next.js 16, React 19, Tailwind CSS 4
-- **Backend:** FastAPI, SQLAlchemy 2, SQLite (dev) / Postgres-ready
-- **Vectors:** Chroma persistent client
-- **AI:** LangChain + Groq, OpenAI Whisper / `gpt-4o-transcribe`
-
-## Data model (clean schema)
-
-```
-User 1──* Resume 1──* TailoredResume
-  │           │
-  │           └──* Application
-  └──────────────* Application
+```mermaid
+graph TD
+    UI[Next.js Frontend] -->|JWT Auth| API[FastAPI Backend]
+    API -->|Relational Data| SQL[(SQL DB: SQLite/PostgreSQL)]
+    API -->|Semantic Search| Vector[(ChromaDB Vector Store)]
+    API -->|Generative AI| LLM[LLM APIs: Groq / OpenAI]
+    API -->|Speech-to-Text| Whisper[Faster Whisper]
 ```
 
-**Constraints & indexes (high-signal for interviews):**
-- `ForeignKey(..., ondelete="CASCADE" | "SET NULL")` with SQLite `PRAGMA foreign_keys=ON`
-- `CheckConstraint` on `application.status` and ATS score range `0–100`
-- Composite indexes: `(user_id, status)`, `(user_id, is_primary)`, `(resume_id, created_at)`, etc.
-- ORM `relationship` + `cascade="all, delete-orphan"` for graph clarity
+### Why a Hybrid Database Approach?
 
-## Security (user data)
+CareerForge uses both Relational (SQL) and Vector databases to ensure data integrity while enabling semantic intelligence.
 
-| Control | Implementation |
-|---------|----------------|
-| Password storage | bcrypt (cost 12), never store plaintext |
-| Password policy | min 8 chars, letters + numbers |
-| Auth | JWT Bearer, exp required, short-lived access tokens |
-| Auth abuse | In-memory sliding-window rate limit on `/api/auth/*` |
-| Isolation | All queries filter by `current_user.id`; vector queries also filter `user_id` |
-| Uploads | Per-user directory, PDF magic-byte check, size cap, sanitized filenames |
-| API hygiene | No filesystem paths in list responses; security headers middleware; CORS allowlist |
-| Secrets | `.env` only; production refuses weak `SECRET_KEY` |
+| Storage System | Primary Responsibility | Interview & Scale Relevance |
+|----------------|------------------------|-----------------------------|
+| **SQL (SQLAlchemy)** | Users, Auth, Resumes Metadata, Applications, ATS scores | ACID transactions, strict multi-tenant isolation via `user_id`, scalable indexing. |
+| **ChromaDB (Vector)** | Chunked resume embeddings for semantic search | Fast ANN retrieval. Answers: _“Which resume bullets best match this JD?”_ without full-table scans. |
 
-## Scalability notes
+---
 
-**What scales today (single node):**
-- Stateless API processes (horizontal scale behind a load balancer)
-- JWT auth → no sticky sessions
-- SQLite + WAL for local/dev; switch `DATABASE_URL` to Postgres for multi-writer
-- Chroma on local disk for demos; swap for hosted Chroma / pgvector / Pinecone in production
+## 🛠️ Tech Stack
 
-**Recommended production path:**
-1. **Postgres** (managed) — connection pool (`DB_POOL_SIZE` / `DB_MAX_OVERFLOW`)
-2. **Object storage** (S3/GCS) for PDFs instead of local `uploads/`
-3. **Managed vector index** or Postgres `pgvector` to co-locate structured + embeddings
-4. **Redis** for distributed rate limiting & job queues (optimize/transcribe async)
-5. **Background workers** for Whisper/LLM long jobs (Celery / RQ / Cloud Tasks)
-6. **Read replicas** for analytics dashboards once write load grows
-7. **CDN** for static Next.js assets; API remains private
+- **Frontend:** Next.js (App Router), React, Tailwind CSS, Lucide Icons
+- **Backend:** FastAPI, Python 3.11+, SQLAlchemy 2.0, Alembic
+- **Databases:** SQLite (Development) / PostgreSQL (Production), ChromaDB (Persistent Vector Store)
+- **AI & NLP:** LangChain, Groq API (LLaMA/Mixtral), OpenAI Whisper (Speech-to-Text), PyMuPDF (PDF Parsing)
+- **DevOps:** GitHub Actions (CI/CD), Pytest, Ruff (Linting & Formatting)
 
-**Bottlenecks to call out in interviews:**
-- LLM & Whisper latency (I/O bound) → async queue + webhooks/SSE
-- Embedding re-index on large resumes → batch offline jobs
-- SQLite write lock → not for multi-instance writes
+---
 
-## Database migrations (Alembic)
+## 🧠 Explainable ATS Scoring (3-Layer Hybrid Model)
 
-Production-grade schema changes use **Alembic** (not ad-hoc `migrate.py`).
+Our Applicant Tracking System (ATS) scoring isn't just a hallucinated percentage from an LLM. It is highly structured and explainable:
+
+| Layer | Type | Max Score | Evaluation Criteria |
+|-------|------|-----------|---------------------|
+| **1. Rule-Based** | Deterministic | 55 | Keywords, sections, quantifiable metrics, action verbs, resume length. |
+| **2. Semantic** | Vector Search | 25 | Cosine similarity between chunked resume embeddings and the Job Description. |
+| **3. LLM Qualitative**| Generative AI | 20 | Bounded qualitative fit assessment, providing strengths & improvement narrative. |
+
+---
+
+## 🚀 Quick Start (Local Development)
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- API Keys: [Groq](https://console.groq.com/) (Required) and [OpenAI](https://platform.openai.com/) (Optional, for advanced STT)
+
+### 1. Backend Setup
 
 ```bash
-cd backend
-alembic upgrade head          # apply migrations
-alembic revision --autogenerate -m "describe change"
-alembic upgrade head
-```
+# Clone the repository
+git clone https://github.com/akshay2004m/careerforge.git
+cd careerforge/backend
 
-- **SQLite** is the default for local demos (`DATABASE_URL=sqlite:///./careerforge.db`).
-- **PostgreSQL** is production-ready: set
-  `DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/careerforge`
-  then `alembic upgrade head`. Pool settings: `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`.
+# Create and activate virtual environment (Windows)
+python -m venv venv
+.\venv\Scripts\activate
 
-`Base.metadata.create_all` still runs on startup for empty local DBs; Alembic is the source of truth for schema evolution.
-
-## Hybrid ATS scoring (3 layers)
-
-ATS is **not** an LLM-invented percentage. Scoring is explainable:
-
-| Layer | Type | Cap | What it does |
-|-------|------|-----|----------------|
-| **1 Rules** | Deterministic | 55 | Keywords, sections, projects, metrics, action verbs, length |
-| **2 Semantic** | Chroma vectors | 25 | Cosine similarity of resume chunks vs JD |
-| **3 LLM qualitative** | Coaching only | 20 | Bounded 1–10 fit → points; strengths / improvements narrative |
-
-```
-Final ATS = Layer1 + Layer2 + Layer3   (0–100)
-```
-
-Pipeline: pre-score gaps → LLM rewrite (improved prompt, no fake ATS %) → re-score tailored text.
-
-API: `ats_score`, `layer_scores`, `ats_breakdown`, `matched_keywords`, `missing_keywords`,
-`score_before`, `score_delta`, `qualitative_summary`, `strengths`.
-
-Service: `app/services/ats_analyzer.py`
-
-## Tests
-
-```bash
-cd backend
+# Install dependencies
 pip install -r requirements.txt
-pytest -q
-```
 
-## Quick start
+# Configure environment variables
+cp .env.example .env
+# Edit .env and add your GROQ_API_KEY & SECRET_KEY
 
-### Backend
-
-```bash
-# from repo root
-.\venv\Scripts\activate   # Windows
-cd backend
-# .env: SECRET_KEY, GROQ_API_KEY, optional OPENAI_API_KEY
+# Run database migrations
 alembic upgrade head
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8002
+
+# Start the FastAPI server
+uvicorn app.main:app --reload --port 8000
 ```
+- **API Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **Health Check:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 
-Health (includes DB + vector status): http://127.0.0.1:8002/health
-Docs: http://127.0.0.1:8002/docs
-
-### Frontend
+### 2. Frontend Setup
 
 ```bash
-cd frontend
-# .env.local: NEXT_PUBLIC_API_URL=http://127.0.0.1:8002
+cd ../frontend
+
+# Install dependencies
 npm install
+
+# Configure environment variables
+cp .env.example .env.local
+# Set NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+
+# Start the Next.js development server
 npm run dev
 ```
+- **Web App:** [http://localhost:3000](http://localhost:3000)
 
-App: http://localhost:3000
+---
 
-## Environment
+## 🧪 Testing & CI/CD
 
-`backend/.env` example:
+The project utilizes `pytest` with extensive coverage for core logic (like ATS analysis and document parsing), integrated with **GitHub Actions** for continuous integration.
 
-```env
-APP_ENV=development
-DATABASE_URL=sqlite:///./careerforge.db
-SECRET_KEY=generate-a-long-random-string
-GROQ_API_KEY=
-OPENAI_API_KEY=
-CHROMA_ENABLED=true
-CHROMA_PERSIST_DIR=./chroma_data
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
+```bash
+cd backend
+pytest tests/ -v
 ```
 
-## Feature map
+---
 
-| Feature | UI | API |
-|--------|----|-----|
-| Auth / profile / password | `/auth/*`, `/profile` | `/api/auth/*` |
-| Multi-resume management | `/profile` | `/api/resume/*` |
-| Optimize + PDF export | `/optimizer` | `/api/optimize` |
-| Skill extract from JD | optimizer / applications | `/api/skills/extract` |
-| Application tracker | `/applications` | `/api/applications` |
-| Analytics dashboard | `/dashboard` | `/api/analytics/summary` |
-| Interview Q bank + Whisper | `/interview` | `/api/interview/*` |
+## ☁️ Deployment Strategy (Recommended)
 
-## Project layout (backend)
+To deploy CareerForge AI to production, we recommend the following split architecture to maximize performance while minimizing costs:
 
-```
-backend/app/
-  models/models.py      # schema, FKs, indexes, relationships
-  core/database.py      # engine, FK pragma, pools
-  core/security.py      # bcrypt, JWT, ownership helpers
-  core/middleware.py    # security headers + auth rate limit
-  services/vector_store.py  # Chroma hybrid retrieval
-  routers/              # thin HTTP layer
-```
+1. **Frontend (Vercel):** Seamless Next.js edge deployment and global CDN.
+2. **Backend (Render / Railway):** Reliable hosting for the FastAPI Python backend.
+3. **Database (Neon Serverless Postgres):** Scalable, production-ready PostgreSQL with a generous free tier.
+4. **Vector Store:** Migrate from local ChromaDB to a managed vector database (like Pinecone) or leverage `pgvector` alongside Neon.
+
+---
+
+## 🔒 Security Best Practices Implemented
+
+- **Password Storage:** bcrypt hashing (cost factor 12).
+- **Authentication:** Stateless JWT Bearer tokens with strict expiration.
+- **Data Isolation:** All database queries and vector searches are strictly isolated by `user_id`.
+- **Upload Hygiene:** Secure PDF magic-byte validation, file size limits, and sanitized filenames to prevent path traversal.
+- **API Protection:** CORS allow-listing and dependency-injected security guards.
+
+---
+
+<div align="center">
+  <p>Built with ❤️ for modern software engineers aiming to land their dream roles.</p>
+</div>
