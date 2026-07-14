@@ -16,7 +16,7 @@ const navItems = [
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen, onClose }: { mobileOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
 
   return (
