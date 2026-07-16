@@ -10,6 +10,8 @@ jobs:
   backend:
     name: Backend (Lint + Test)
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--no-deprecation"
     defaults:
       run:
         working-directory: ./backend
@@ -48,6 +50,8 @@ jobs:
   frontend:
     name: Frontend (Lint + Build)
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--no-deprecation"
     defaults:
       run:
         working-directory: ./frontend

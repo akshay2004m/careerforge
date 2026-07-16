@@ -25,7 +25,7 @@ from app.main import app  # noqa: E402
 from app.models import models  # noqa: F401, E402
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def test_engine():
     engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
     Base.metadata.create_all(bind=engine)
@@ -65,7 +65,7 @@ def auth_headers(client):
     if r.status_code == 400:
         r = client.post(
             "/api/auth/login",
-            data={"username": payload["email"], "password": payload["password"]},
+            json={"email": payload["email"], "password": payload["password"]},
         )
     assert r.status_code == 200, r.text
     token = r.json()["access_token"]

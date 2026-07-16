@@ -1,3 +1,6 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -47,22 +50,39 @@ def _normalize_user_emails() -> None:
 
 _normalize_user_emails()
 
-if settings.is_production and settings.SECRET_KEY in {
-    "your-super-secret-key-change-in-production",
-    "change-me",
-    "supersecretkeychangethisinproduction2025",
-}:
-    raise RuntimeError("Refusing to start: set a strong SECRET_KEY in production")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ====================== STARTUP CHECK ======================
+    if settings.APP_ENV == "production":
+        if settings.DATABASE_URL.startswith("sqlite"):
+            error_msg = (
+                "❌ Production environment cannot use SQLite database. "
+                "Please set a valid PostgreSQL DATABASE_URL "
+                "(e.g., from Neon or Supabase)."
+            )
+            logger.critical(error_msg)
+            raise RuntimeError(error_msg)
+        if settings.SECRET_KEY in {
+            "your-super-secret-key-change-in-production",
+            "change-me",
+            "supersecretkeychangethisinproduction2025",
+        }:
+            raise RuntimeError("Refusing to start: set a strong SECRET_KEY in production")
+
+    logger.info(f"✅ Starting in {settings.APP_ENV} mode")
+    yield
+    # Shutdown code (if needed)
+    logger.info("Shutting down application...")
+
 
 app = FastAPI(
     title="CareerForge AI",
-    description=(
-        "AI career platform: hybrid ATS scoring, resume optimization (SQL + Chroma), "
-        "cover letters, mock interviews, and application tracking.\n\n"
-        "**Migrations:** run `alembic upgrade head` from `backend/`.\n"
-        "**Prod DB:** set `DATABASE_URL` to PostgreSQL."
-    ),
-    version="1.3.0",
+    description="AI-powered career coaching platform",
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 register_exception_handlers(app)
@@ -73,10 +93,13 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://your-vercel-app.vercel.app",  # We'll update this later
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])

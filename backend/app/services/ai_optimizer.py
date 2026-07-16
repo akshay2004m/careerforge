@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 
 from langchain_core.prompts import ChatPromptTemplate
@@ -7,6 +8,7 @@ from langchain_groq import ChatGroq
 from app.core.config import settings
 
 _llm = None
+logger = logging.getLogger(__name__)
 
 
 def get_llm():
@@ -65,7 +67,8 @@ def _parse_optimize_payload(content: str, original_text: str) -> dict:
     """Parse LLM JSON. ATS numeric score is NEVER taken from the model."""
     try:
         data = _extract_json(content)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Error parsing LLM output: {e}")
         data = {}
 
     tailored = data.get("tailored_resume") or content or original_text
@@ -203,7 +206,8 @@ Hard rules:
     try:
         data = _extract_json(content)
         parsed["rubric_scores"] = data.get("rubric_scores") or {}
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Error extracting rubric: {e}")
         parsed["rubric_scores"] = {}
     return parsed
 
@@ -233,38 +237,20 @@ def optimize_resume(
 
     # Pre-pass rules → feed full analysis into LLM prompt
     pre_rules = layer1_rules(original_text, job_description)
-    pre_missing = pre_rules.get("missing_keywords") or []
 
-    llm_ok = True
     try:
         parsed = _run_llm_optimize(original_text, job_description, focus, pre_rules)
     except Exception as e:
-        print(f"AI optimize error: {e}")
-        llm_ok = False
-        parsed = {
-            "tailored_resume": original_text,
-            "key_improvements": [
-                "AI rewrite unavailable — scored original resume with rules + semantic only.",
-                f"Error: {str(e)[:120]}",
-            ],
-            "strengths": [],
-            "cover_letter": "Unable to generate cover letter at this time. Please try again shortly.",
-            "llm_suggested_keywords": pre_missing[:10],
-            "qualitative_fit": None,
-            "qualitative_summary": "",
-            "improvements": [],
-            "rubric_scores": {},
-        }
+        logger.error(f"Resume optimization failed: {str(e)}", exc_info=True)
+        raise RuntimeError("Failed to generate optimized resume. Please try again.") from e
 
-    llm_qual = None
-    if llm_ok:
-        llm_qual = {
-            "qualitative_fit": parsed.get("qualitative_fit"),
-            "strengths": parsed.get("strengths") or [],
-            "improvements": parsed.get("improvements") or parsed.get("key_improvements") or [],
-            "qualitative_summary": parsed.get("qualitative_summary") or "",
-            "key_improvements": parsed.get("key_improvements") or [],
-        }
+    llm_qual = {
+        "qualitative_fit": parsed.get("qualitative_fit"),
+        "strengths": parsed.get("strengths") or [],
+        "improvements": parsed.get("improvements") or parsed.get("key_improvements") or [],
+        "qualitative_summary": parsed.get("qualitative_summary") or "",
+        "key_improvements": parsed.get("key_improvements") or [],
+    }
 
     comparison = score_before_after(
         original_text,
@@ -345,13 +331,8 @@ score is 1-10 overall quality of the answer.
             "improvements": data.get("improvements") or [],
         }
     except Exception as e:
-        print(f"Interview feedback error: {e}")
-        return {
-            "feedback": "Thanks for practicing. Focus on a clear structure: situation, actions, and measurable results.",
-            "score": 7,
-            "strengths": ["You completed a practice answer"],
-            "improvements": ["Add quantifiable outcomes", "Keep answers under 2 minutes"],
-        }
+        logger.error(f"Interview feedback failed: {str(e)}", exc_info=True)
+        raise RuntimeError("Failed to generate interview feedback. Please try again.") from e
 
 
 COMMON_INTERVIEW_QUESTIONS = [
@@ -400,12 +381,8 @@ Respond with ONLY valid JSON array of strings, e.g. ["Question 1?", "Question 2?
         if isinstance(questions, list) and questions:
             role_specific = [str(q) for q in questions][:role_count]
     except Exception as e:
-        print(f"Interview questions error: {e}")
-        role_specific = [
-            "Which of your past projects best maps to this role's core responsibilities?",
-            "How would you design a scalable solution for a key challenge in this job?",
-            "Describe a time you improved a system or process end-to-end.",
-        ][:role_count]
+        logger.error(f"Interview questions generation failed: {str(e)}", exc_info=True)
+        raise RuntimeError("Failed to generate interview questions. Please try again.") from e
 
     common = COMMON_INTERVIEW_QUESTIONS[:3] if include_common else []
     combined = list(dict.fromkeys([*common, *role_specific]))[:count]

@@ -16,8 +16,13 @@ const navItems = [
   { href: '/profile', label: 'Profile', icon: User },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function Sidebar(_props: { mobileOpen?: boolean; onClose?: () => void }) {
+interface SidebarProps {
+  onClose?: () => void;
+  mobileOpen?: boolean;
+  children?: React.ReactNode;
+}
+
+export default function Sidebar(props: SidebarProps) {
   const pathname = usePathname();
 
   return (

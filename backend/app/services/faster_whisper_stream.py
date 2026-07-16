@@ -184,13 +184,14 @@ def cuda_available() -> bool:
         import ctranslate2
 
         return int(ctranslate2.get_cuda_device_count() or 0) > 0
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error(f"CUDA check (ctranslate2) failed: {str(e)}", exc_info=True)
     try:
         import torch
 
         return bool(torch.cuda.is_available())
-    except Exception:
+    except Exception as e:
+        logger.error(f"CUDA check (torch) failed: {str(e)}", exc_info=True)
         return False
 
 
@@ -382,7 +383,8 @@ def get_whisper_model():
 
                 if torch.cuda.is_available():
                     gpu_name = torch.cuda.get_device_name(0)
-            except Exception:
+            except Exception as e:
+                logger.error(f"Failed to get CUDA device name: {str(e)}", exc_info=True)
                 gpu_name = "cuda:0"
 
         msg = f"[STT] Loading faster-whisper: {model_size} on {device.upper()} ({compute_type})" + (
@@ -924,12 +926,17 @@ class FasterWhisperStreaming:
         if self.format == "wav" or (audio_chunk[:4] == b"RIFF" and audio_chunk[8:12] == b"WAVE"):
             try:
                 return _wav_to_pcm(audio_chunk)
-            except Exception:
+            except Exception as e:
+                logger.error(f"WAV parsing error during fast path: {str(e)}", exc_info=True)
                 wav = convert_to_wav(audio_chunk, "wav")
                 if wav[:4] == b"RIFF":
                     try:
                         return _wav_to_pcm(wav)
-                    except Exception:
+                    except Exception as e2:
+                        logger.error(
+                            f"WAV to PCM conversion failed after ffmpeg fallback: {str(e2)}",
+                            exc_info=True,
+                        )
                         return b""
                 return b""
 
@@ -937,7 +944,8 @@ class FasterWhisperStreaming:
         if wav[:4] == b"RIFF":
             try:
                 return _wav_to_pcm(wav)
-            except Exception:
+            except Exception as e:
+                logger.error(f"Final WAV to PCM conversion failed: {str(e)}", exc_info=True)
                 return b""
         return b""
 
