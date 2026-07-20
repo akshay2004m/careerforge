@@ -98,6 +98,8 @@ app.add_middleware(
         "https://benevolent-dodol-c25ae5.netlify.app",
         "https://deploy-preview-1--benevolent-dodol-c25ae5.netlify.app",
         "https://careerforge-ute15mq7y-akshays-projects-48a89927.vercel.app",
+        "https://careerforge-9ijp2z0gh-akshays-projects-48a89927.vercel.app",
+        "https://careerforge-9ijp2z0gh-akshays-projects-48a89927.vercel.app/",
     ],
     allow_credentials=True,
     allow_methods=["*"],
