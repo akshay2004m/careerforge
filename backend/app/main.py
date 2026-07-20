@@ -95,7 +95,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://your-netlify-site.netlify.app",
+        "https://benevolent-dodol-c25ae5.netlify.app",
+        "https://deploy-preview-1--benevolent-dodol-c25ae5.netlify.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
