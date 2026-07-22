@@ -93,7 +93,14 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://careerforge-five-peach.vercel.app",
+        "https://careerforge-9ijp2z0gh-akshays-projects-48a89927.vercel.app",
+        "https://benevolent-dodol-c25ae5.netlify.app",
+        "https://deploy-preview-1--benevolent-dodol-c25ae5.netlify.app",
+        "https://careerforge-ute15mq7y-akshays-projects-48a89927.vercel.app",
+    ],
     allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.netlify\.app",
     allow_credentials=True,
     allow_methods=["*"],
