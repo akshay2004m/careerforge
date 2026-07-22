@@ -9,6 +9,23 @@ from app.core.config import settings
 
 _llm = None
 logger = logging.getLogger(__name__)
+COVER_LETTER_PROMPT = """
+You are an expert career coach. Generate a professional cover letter.
+
+Resume: {resume_text}
+Job Description: {job_description}
+
+Return ONLY valid JSON in this exact format:
+{
+  "cover_letter": "the full cover letter text here"
+}
+
+Rules:
+- Do not add any extra text outside the JSON.
+- Use double quotes for strings.
+- Escape any special characters properly.
+- Keep the cover letter under 400 words.
+"""
 
 
 def get_llm():
@@ -180,7 +197,7 @@ Respond with ONLY valid JSON (no markdown):
     "role_relevance": 7
   }},
   "qualitative_summary": "2-3 sentences on overall fit after rewrite",
-  "cover_letter": "Full professional cover letter tailored to the JD"
+  "cover_letter": "Use this logic: {cv_prompt}"
 }}
 
 Hard rules:
