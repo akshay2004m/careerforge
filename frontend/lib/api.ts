@@ -296,7 +296,7 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  /** STT health (faster-whisper + ffmpeg availability) */
+  /** STT health (Sarvam AI availability) */
   sttHealth: () =>
     request<{
       ok: boolean;

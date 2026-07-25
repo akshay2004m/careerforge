@@ -32,7 +32,7 @@ async def transcribe_audio(audio_bytes: bytes, language_code: str = "en-IN") -> 
 
     data = {
         "language_code": language_code,  # en-IN works well for Indian English
-        "model": "saaras:v2",  # or latest model available
+        "model": "saaras:v3",  # or latest model available
     }
 
     async with httpx.AsyncClient(timeout=60.0) as client:

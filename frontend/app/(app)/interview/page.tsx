@@ -129,7 +129,7 @@ export default function InterviewPage() {
     try {
       const session = await startWhisperStream({
         onReady: (info) => {
-          const model = typeof info.model === 'string' ? info.model : 'faster-whisper';
+          const model = typeof info.model === 'string' ? info.model : 'Sarvam AI';
           setSttHint(`Listening · ${model}`);
           toast.success('Microphone live — start speaking');
         },
@@ -224,7 +224,7 @@ export default function InterviewPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <PageHeader
-        eyebrow="faster-whisper · Live voice · Coaching"
+        eyebrow="Sarvam AI · Live voice · Coaching"
         title="AI Mock Interview"
         description="Generate common + role-specific questions, answer by voice or text, then get structured feedback."
       />
@@ -359,7 +359,7 @@ export default function InterviewPage() {
                 ) : (
                   <>
                     <MicOff className="w-3 h-3" />
-                    {sttHint || 'Voice uses faster-whisper over WebSocket (PCM 16 kHz)'}
+                    {sttHint || 'Voice uses Sarvam AI over WebSocket (PCM 16 kHz)'}
                   </>
                 )}
               </p>

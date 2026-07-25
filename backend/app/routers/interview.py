@@ -288,7 +288,7 @@ async def ws_transcribe(
                 "type": "ready",
                 "message": 'Connected. Send audio bytes; send {"type":"end"} to finalize.',
                 "format": fmt,
-                "engine": "sarvam",
+                "model": "sarvam",
             },
         )
 
