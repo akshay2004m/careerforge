@@ -215,6 +215,7 @@ Hard rules:
             "focus": focus[:4000] or "(no vector chunks)",
             "gaps": gaps,
             "rule_brief": rule_brief[:2500],
+            "cv_prompt": COVER_LETTER_PROMPT,
         }
     )
     content = result.content if hasattr(result, "content") else str(result)
