@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # --- AI keys (never log these) ---
     GROQ_API_KEY: str = ""
     OPENAI_API_KEY: Optional[str] = None
+    SARVAM_API_KEY: str = ""
 
     # --- CORS (comma-separated in env) ---
     CORS_ORIGINS: str = (
