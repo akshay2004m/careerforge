@@ -3,6 +3,15 @@
   <h1>CareerForge AI 🚀</h1>
   <p><strong>Your Ultimate AI-Powered Career Coach & Job Application Strategist</strong></p>
 
+  <p align="center">
+    <a href="https://careerforge-five-peach.vercel.app">
+      <img src="https://img.shields.io/badge/Live_Demo-Vercel-black?style=for-the-badge&logo=vercel" alt="Live Demo" />
+    </a>
+    <a href="https://github.com/akshay2004m/careerforge/actions">
+      <img src="https://img.shields.io/github/actions/workflow/status/akshay2004m/careerforge/ci.yml?style=for-the-badge" alt="CI" />
+    </a>
+  </p>
+
   <p>
     <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi" alt="FastAPI" /></a>
     <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js" alt="Next.js" /></a>
@@ -23,7 +32,7 @@ CareerForge AI is a comprehensive, AI-powered career coaching platform designed 
 - 🎯 **ATS Scoring Engine:** A transparent, explainable 3-layer scoring system (Rules + Semantic + LLM).
 - 📝 **Cover Letter Generation:** Generate highly relevant, contextual cover letters instantly.
 - 📊 **Application Tracking System:** Track your job applications, statuses, and progression over time.
-- 🎙️ **Mock Interviews:** Real-time AI interview practice with speech-to-text using OpenAI Whisper.
+- 🎙️ **Mock Interviews:** Real-time AI interview practice with speech-to-text powered by **Sarvam AI**.
 
 ---
 
@@ -35,7 +44,7 @@ graph TD
     API -->|Relational Data| SQL[(SQL DB: SQLite/PostgreSQL)]
     API -->|Semantic Search| Vector[(ChromaDB Vector Store)]
     API -->|Generative AI| LLM[LLM APIs: Groq / OpenAI]
-    API -->|Speech-to-Text| Whisper[Faster Whisper]
+    API -->|Speech-to-Text| STT[Sarvam AI]
 ```
 
 ### Why a Hybrid Database Approach?
@@ -56,6 +65,16 @@ CareerForge uses both Relational (SQL) and Vector databases to ensure data integ
 - **Databases:** SQLite (Development) / PostgreSQL (Production), ChromaDB (Persistent Vector Store)
 - **AI & NLP:** LangChain, Groq API (LLaMA/Mixtral), OpenAI Whisper (Speech-to-Text), PyMuPDF (PDF Parsing)
 - **DevOps:** GitHub Actions (CI/CD), Pytest, Ruff (Linting & Formatting)
+
+---
+
+## 💡 Key Technical Highlights
+
+- Hybrid **3-layer ATS scoring** (Rules + Semantic Vectors + LLM) that is fully explainable
+- Multi-tenant data isolation at both SQL and Vector store level
+- Real-time speech-to-text via WebSocket + Sarvam AI
+- Production safety checks (blocks SQLite in production)
+- Full CI pipeline with Pytest + Ruff + GitHub Actions
 
 ---
 
@@ -143,6 +162,8 @@ To deploy CareerForge AI to production, we recommend the following split archite
 2. **Backend (Render / Railway):** Reliable hosting for the FastAPI Python backend.
 3. **Database (Neon Serverless Postgres):** Scalable, production-ready PostgreSQL with a generous free tier.
 4. **Vector Store:** Migrate from local ChromaDB to a managed vector database (like Pinecone) or leverage `pgvector` alongside Neon.
+
+> **Note:** Backend runs on Render free tier and may take 30–60 seconds to wake up on first request.
 
 ---
 
