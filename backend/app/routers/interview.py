@@ -201,10 +201,19 @@ async def ws_transcribe(
 
     # Origin check (browsers send Origin on WS handshake)
     origin = websocket.headers.get("origin") or ""
-    if settings.is_production and origin and origin not in settings.cors_origin_list:
-        # Reject before accept → clean HTTP-level failure
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        return
+    allowed_origins = getattr(settings, "cors_origin_list", []) or []
+
+    # Allow Vercel and local during development / production
+    if settings.is_production and origin:
+        is_allowed = (
+            origin in allowed_origins
+            or origin.endswith(".vercel.app")
+            or origin.endswith(".netlify.app")
+            or origin.startswith("http://localhost")
+        )
+        if not is_allowed:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
 
     # Auth BEFORE accept when possible so bad tokens don't half-open the socket.
     # Query token is preferred; client may also send {"type":"auth","token":"..."} after open.
