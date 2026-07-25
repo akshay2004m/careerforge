@@ -208,7 +208,6 @@ async def ws_transcribe(
         is_allowed = (
             origin in allowed_origins
             or origin.endswith(".vercel.app")
-            or origin.endswith(".netlify.app")
             or origin.startswith("http://localhost")
         )
         if not is_allowed:

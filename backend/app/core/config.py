@@ -21,8 +21,6 @@ class Settings(BaseSettings):
     # --- CORS (comma-separated in env) ---
     CORS_ORIGINS: str = (
         "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,"
-        "https://benevolent-dodol-c25ae5.netlify.app,"
-        "https://deploy-preview-1--benevolent-dodol-c25ae5.netlify.app,"
         "https://careerforge-ute15mq7y-akshays-projects-48a89927.vercel.app,"
         "https://careerforge-9ijp2z0gh-akshays-projects-48a89927.vercel.app,"
         "https://careerforge-five-peach.vercel.app"
