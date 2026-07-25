@@ -22,8 +22,10 @@ Server → Client
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import logging
+import wave
 from typing import Any, Optional
 
 from fastapi import (
@@ -349,8 +351,17 @@ async def ws_transcribe(
                         )
                         continue
 
-                    # Convert buffer to bytes
-                    audio_bytes = bytes(audio_buffer)
+                    # Convert raw PCM16 buffer to WAV bytes
+                    raw_pcm = bytes(audio_buffer)
+
+                    wav_io = io.BytesIO()
+                    with wave.open(wav_io, "wb") as wav_file:
+                        wav_file.setnchannels(1)
+                        wav_file.setsampwidth(2)
+                        wav_file.setframerate(16000)
+                        wav_file.writeframes(raw_pcm)
+
+                    audio_bytes = wav_io.getvalue()
 
                     # Call Sarvam AI
                     transcript = await transcribe_audio(audio_bytes, language_code="en-IN")
