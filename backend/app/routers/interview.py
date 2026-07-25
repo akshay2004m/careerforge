@@ -50,12 +50,7 @@ from app.schemas.schemas import (
     InterviewQuestionsRequest,
 )
 from app.services.ai_optimizer import generate_interview_feedback, generate_interview_questions
-from app.services.faster_whisper_stream import (
-    StreamingSession,
-    model_info,
-    transcribe_bytes,
-    warmup_model,
-)
+from app.services.sarvam_stt import transcribe_audio
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -98,13 +93,10 @@ def interview_feedback(
 
 @router.get("/stt/health")
 def stt_health(current_user: User = Depends(get_current_user)):
-    """Check whether faster-whisper + ffmpeg are available (does not force load)."""
-    info = model_info()
     return {
         "ok": True,
-        "engine": "faster-whisper",
-        **info,
-        "recommended_format": "pcm",
+        "engine": "sarvam",
+        "recommended_format": "wav",
         "sample_rate": 16000,
         "ws_path": "/api/interview/ws/transcribe",
     }
@@ -112,13 +104,7 @@ def stt_health(current_user: User = Depends(get_current_user)):
 
 @router.post("/stt/warmup")
 def stt_warmup(current_user: User = Depends(get_current_user)):
-    """Load the Whisper model into memory (first call can take a while)."""
-    try:
-        info = warmup_model()
-        return {"ok": True, "message": "Model loaded", **info}
-    except Exception as e:
-        logger.exception("Whisper warmup failed")
-        raise HTTPException(status_code=503, detail=str(e)) from e
+    return {"ok": True, "message": "Sarvam API does not require warmup"}
 
 
 @router.post("/stt/transcribe")
@@ -126,16 +112,14 @@ async def stt_transcribe_once(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
 ):
-    """One-shot file transcription fallback (complete WebM/WAV/MP3)."""
+    """One-shot file transcription fallback."""
     data = await file.read()
     if not data or len(data) < 200:
         raise HTTPException(status_code=400, detail="Audio file is empty or too short")
-    if len(data) > 25 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="Audio file too large (max 25 MB)")
 
     try:
-        result = await asyncio.to_thread(transcribe_bytes, data, file.filename or "audio.webm")
-        return result
+        transcript = await transcribe_audio(data)
+        return {"text": transcript}
     except Exception as e:
         logger.exception("One-shot transcription failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -292,49 +276,19 @@ async def ws_transcribe(
         _active_ws += 1
 
     fmt = (format or "pcm").lower().strip()
-    if fmt not in {"pcm", "wav", "webm", "ogg", "mp3", "m4a"}:
-        fmt = "pcm"
 
-    session = StreamingSession(format=fmt)  # type: ignore[arg-type]
-    model_ready = False
-    warm_task: asyncio.Task | None = None
+    audio_buffer = bytearray()
 
     try:
-        # Send ready immediately — do NOT block handshake on model download/load.
-        # Model loads lazily on first audio (or optional client {"type":"warmup"}).
         await _ws_send(
             websocket,
             {
                 "type": "ready",
-                "message": 'Connected. Stream audio; send {"type":"end"} to finalize.',
+                "message": 'Connected. Send audio bytes; send {"type":"end"} to finalize.',
                 "format": fmt,
-                "sample_rate": 16000,
-                "channels": 1,
-                "encoding": "pcm_s16le" if fmt == "pcm" else fmt,
-                "engine": "faster-whisper",
-                "model_loaded": model_info().get("loaded", False),
-                **model_info(),
+                "engine": "sarvam",
             },
         )
-
-        # Warm in background so first partial is faster
-        async def _bg_warm() -> None:
-            nonlocal model_ready
-            try:
-                await asyncio.to_thread(warmup_model)
-                model_ready = True
-                await _ws_send(
-                    websocket,
-                    {"type": "status", "message": "model_ready", **model_info()},
-                )
-            except Exception as e:
-                logger.exception("Background Whisper warmup failed")
-                await _ws_send(
-                    websocket,
-                    {"type": "error", "message": f"STT engine failed to load: {e}"},
-                )
-
-        warm_task = asyncio.create_task(_bg_warm())
 
         while True:
             message = await websocket.receive()
@@ -347,7 +301,6 @@ async def ws_transcribe(
                 chunk: bytes = message["bytes"]
                 if not chunk:
                     continue
-                # Soft size guard per frame (2s of PCM16 mono ~ 64 KB; webm can be larger)
                 if len(chunk) > 512_000:
                     await _ws_send(
                         websocket,
@@ -355,33 +308,7 @@ async def ws_transcribe(
                     )
                     continue
 
-                # Ensure model is loaded before first decode
-                if not model_ready:
-                    try:
-                        if warm_task is not None:
-                            await warm_task
-                        else:
-                            await asyncio.to_thread(warmup_model)
-                        model_ready = True
-                    except Exception as e:
-                        await _ws_send(
-                            websocket,
-                            {"type": "error", "message": f"STT engine unavailable: {e}"},
-                        )
-                        continue
-
-                try:
-                    result = await session.add_audio(chunk)
-                except Exception as e:
-                    logger.warning("chunk process error: %s", e)
-                    await _ws_send(
-                        websocket,
-                        {"type": "error", "message": f"Audio decode failed: {e}"},
-                    )
-                    continue
-
-                if result:
-                    await _ws_send(websocket, result.to_dict())
+                audio_buffer.extend(chunk)
                 continue
 
             # --- text control ---
@@ -392,10 +319,6 @@ async def ws_transcribe(
             try:
                 data = json.loads(text)
             except json.JSONDecodeError:
-                await _ws_send(
-                    websocket,
-                    {"type": "error", "message": "Invalid JSON control message"},
-                )
                 continue
 
             msg_type = (data.get("type") or "").lower()
@@ -404,91 +327,52 @@ async def ws_transcribe(
                 await _ws_send(websocket, {"type": "pong"})
                 continue
 
-            # Already authenticated via query or pre-ready handshake
             if msg_type == "auth":
                 continue
 
-            if msg_type == "warmup":
-                if not model_ready:
-                    try:
-                        if warm_task is not None:
-                            await warm_task
-                        else:
-                            await asyncio.to_thread(warmup_model)
-                        model_ready = True
-                    except Exception as e:
-                        await _ws_send(
-                            websocket,
-                            {"type": "error", "message": f"STT engine unavailable: {e}"},
-                        )
-                else:
-                    await _ws_send(
-                        websocket,
-                        {"type": "status", "message": "model_ready", **model_info()},
-                    )
-                continue
-
-            if msg_type == "config":
-                new_fmt = (data.get("format") or fmt).lower()
-                if new_fmt in {"pcm", "wav", "webm", "ogg", "mp3", "m4a"}:
-                    session.format = new_fmt  # type: ignore[assignment]
-                    fmt = new_fmt
-                if data.get("language"):
-                    session.language = str(data["language"])[:8]
-                if data.get("prompt"):
-                    session.initial_prompt = str(data["prompt"])[:800]
-                await _ws_send(
-                    websocket,
-                    {
-                        "type": "status",
-                        "message": "config updated",
-                        "format": session.format,
-                        "language": session.language,
-                    },
-                )
-                continue
-
             if msg_type == "reset":
-                session.reset()
+                audio_buffer.clear()
                 await _ws_send(websocket, {"type": "status", "message": "buffer cleared"})
                 continue
 
             if msg_type in {"end", "stop", "finalize"}:
                 try:
-                    final = await session.finalize()
-                except Exception as e:
-                    logger.exception("finalize failed")
-                    await _ws_send(
-                        websocket,
-                        {"type": "error", "message": f"Final transcription failed: {e}"},
-                    )
-                    continue
+                    if len(audio_buffer) == 0:
+                        await _ws_send(
+                            websocket,
+                            {
+                                "type": "final",
+                                "text": "",
+                                "is_final": True,
+                                "message": "No speech detected",
+                            },
+                        )
+                        continue
 
-                if final:
-                    await _ws_send(websocket, final.to_dict())
-                else:
-                    await _ws_send(
-                        websocket,
-                        {
-                            "type": "final",
-                            "text": "",
-                            "full_text": "",
-                            "is_final": True,
-                            "message": "No speech detected",
-                        },
+                    # Convert buffer to bytes
+                    audio_bytes = bytes(audio_buffer)
+
+                    # Call Sarvam AI
+                    transcript = await transcribe_audio(audio_bytes, language_code="en-IN")
+
+                    # Send final result to frontend
+                    await websocket.send_json({"type": "final", "text": transcript or ""})
+
+                    await websocket.send_json(
+                        {"type": "status", "message": "transcription_complete"}
+                    )
+
+                    audio_buffer.clear()
+
+                except Exception as e:
+                    logger.error(f"Sarvam transcription failed: {e}", exc_info=True)
+                    await websocket.send_json(
+                        {"type": "error", "message": "Transcription failed. Please try again."}
                     )
                 continue
 
             if msg_type == "close":
                 break
-
-            await _ws_send(
-                websocket,
-                {
-                    "type": "error",
-                    "message": f"Unknown control type: {msg_type}",
-                },
-            )
 
     except WebSocketDisconnect:
         logger.debug("STT websocket disconnected")
@@ -500,8 +384,5 @@ async def ws_transcribe(
         except Exception:
             pass
     finally:
-        if warm_task is not None and not warm_task.done():
-            warm_task.cancel()
-        session.close()
         async with _active_ws_lock:
             _active_ws = max(0, _active_ws - 1)
